@@ -1,0 +1,15 @@
+---
+- name: create service for mounting sshfs
+  copy: src=templates/media-pi-WD.mount
+          dest=/etc/systemd/system/media-pi-WD.mount
+          owner=root
+          group=root
+          mode=644
+  become: true
+  become_user: root
+
+- name: enable sshfs service | enable sshfs service and start it
+  shell: "{{ item }}"
+  with_items:
+    - "systemctl enable media-pi-WD.mount"
+    - "systemctl start media-pi-WD.mount"

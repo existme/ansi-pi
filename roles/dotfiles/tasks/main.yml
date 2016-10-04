@@ -1,0 +1,37 @@
+---
+- name: Cloning  MyDotFiles
+  git:
+    force=yes
+    repo={{ mydotfiles_repo }}
+    dest=~/{{ mydotfiles_subpath }}/{{ mydotfiles_folder }}
+  register: cloning
+  become: false
+
+- name: MyDotFiles -> submodule update
+  shell: git submodule update
+  args:
+    chdir: ~/{{ mydotfiles_subpath }}/{{ mydotfiles_folder }}
+  when: cloning|success
+
+- name: run the install script from repo
+  shell: ~/{{ mydotfiles_subpath }}/{{ mydotfiles_folder }}/install/debian.sh
+  args:
+    chdir: ~/{{ mydotfiles_subpath }}/{{ mydotfiles_folder }}
+  when: cloning|success
+
+# Do the same things for the root user
+- name: Ensure /root/git exists
+  file: path=~/git state=directory
+  when: cloning|success
+  become: true
+  become_user: root
+
+- name: Symlink dotfiles for root
+  file: src=/home/{{ ansible_ssh_user }}/{{ mydotfiles_subpath }}/{{ mydotfiles_folder }} dest=/root/{{ mydotfiles_subpath}}/{{ mydotfiles_folder }} state=link force=yes
+  when: cloning|success
+
+- name: run the install script from repo for root
+  shell: ~/{{ mydotfiles_subpath }}/{{ mydotfiles_folder }}/install/debian.sh
+  args:
+    chdir: ~/{{ mydotfiles_subpath }}/{{ mydotfiles_folder }}
+  when: cloning|success

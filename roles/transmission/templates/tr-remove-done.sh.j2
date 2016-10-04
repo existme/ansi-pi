@@ -1,0 +1,2 @@
+#!/bin/bash
+/usr/bin/transmission-remote --auth {{ transmission_user }}:{{ transmission_password }} -l | grep 100% | awk '{print $1}' | xargs -n 1 -I % /usr/bin/transmission-remote --auth {{ transmission_user }}:{{ transmission_password }} -t % -S

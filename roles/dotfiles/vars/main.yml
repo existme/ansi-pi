@@ -1,0 +1,6 @@
+---
+  mydotfiles_repo: "https://github.com/existme/MyDotFiles.git"
+  mydotfiles_folder: MyDotFiles
+  mydotfiles_subpath: git
+
+

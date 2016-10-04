@@ -1,0 +1,112 @@
+# ================= Ansible Group Vars: ALL ========================
+---
+# Variables listed here are applicable to all host groups
+
+network:
+  - { interface: "eth0",
+      ip: "192.168.0.30/24",
+      dns_servers: "4.2.2.4 8.8.8.8",
+      gateway: "192.168.0.2" }
+
+
+
+# Samba config from https://github.com/mrlesmithjr/ansible-samba
+samba_workgroup: MYPI
+samba_allow_guests: 'no'
+#defines root folder for samba shares to be created
+# Note that samba share path should end with /
+samba_share_path: '/media/pi/'
+
+normal_mounts:
+  - {
+    prefix: '',
+    name: 'My Book',
+    src: '/dev/sda1',
+    path: '',
+    uid: 'vagrant',
+    gid: 'pi',
+    fstype: 'auto'
+  }
+#  - {
+#    prefix: 'sshfs#',
+#    name: 'WD',
+#    src: 'root@192.168.0.50',
+#    path: ':/DataVolume/shares/WD',
+#    uid: 'vagrant',
+#    gid: 'pi',
+#    fstype: 'fuse'
+#  }
+
+samba_users:
+  - name: vagrant
+    #define groups to add user to...ensure samba_groups names exist.
+    groups:
+      - nogroup
+      - pi
+    #define samba user password
+    smbpasswd: 'ThePa$$w0rd'
+  - name: mehman
+    groups:
+      - nogroup
+    smbpasswd: 'ThePa$$w0rd2'
+
+samba_shares:
+  - name: 'private'
+    path: 'private'
+    browsable: 'yes'
+    folder_perms: '0770'
+    group: 'nogroup'
+    guest_ok: 'no'
+    owner: 'nobody'
+    read_only: 'no'
+    writable: 'yes'
+  - name: 'public'
+    path: 'public'
+    browsable: 'yes'
+    folder_perms: '0777'
+    group: 'nogroup'
+    guest_ok: 'yes'
+    owner: 'nobody'
+    read_only: 'no'
+    writable: 'yes'
+  - name: 'B1T'
+    path: 'My Book'
+    browsable: 'yes'
+    folder_perms: '0777'
+    group: 'pi'
+    owner: 'vagrant'
+    guest_ok: 'no'
+    valid_users: '@pi'
+    writable: 'yes'
+  - name: 'wiki'
+    path: 'My Book/git/wiki'
+    browsable: 'yes'
+    folder_perms: '0770'
+    group: 'pi'
+    owner: 'vagrant'
+    guest_ok: 'no'
+    valid_users: '@pi'
+    writable: 'yes'
+    link: 'yes'
+  - name: 'WD'
+    path: 'WD'
+    browsable: 'yes'
+    folder_perms: '0777'
+    group: 'pi'
+    owner: 'vagrant'
+    guest_ok: 'no'
+    valid_users: '@pi'
+    writable: 'yes'
+
+apache_listen_port: 80
+apache_remove_default_vhost: true
+apache_create_vhosts: true
+apache_global_vhost_settings: |
+  DirectoryIndex index.php index.html
+apache_vhosts:
+  # Additional optional properties: 'serveradmin, serveralias, extra_parameters'.
+  - servername: "wiki"
+    documentroot: "/media/pi/My Book/git/wiki"
+#    extra_parameters: |
+#      RewriteCond %{HTTP_HOST} !^www\. [NC]
+#      RewriteRule ^(.*)$ http://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]

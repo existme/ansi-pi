@@ -1,0 +1,23 @@
+---
+- name: Configure network
+  template: >
+    src=templates/dhcpcd.tpl
+    dest=/etc/dhcpcd.conf
+  with_items: "{{ network }}"
+  become: true
+  become_user: root
+
+- name: Reboot System
+  shell: sleep 2 && shutdown -r now
+  async: 1
+  poll: 0
+  ignore_errors: true
+
+- name: waiting for server to come back
+  local_action:
+    wait_for host={{ inventory_hostname }}
+    port=22
+    state=started
+    delay=15
+    timeout=300
+  become: false

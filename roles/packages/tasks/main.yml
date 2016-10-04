@@ -1,0 +1,66 @@
+---
+# Install required packages and remove unnecessary packages from raspberrypi
+- name: install list of packages
+  apt: name={{ item }} state=present
+  with_items:
+    - git
+    - vifm
+    - vim
+    - zsh
+    - locate
+    - util-linux #for findmnt
+    - sshfs
+    - fail2ban
+  become: true
+  become_user: root
+  register: installation
+
+- name: Ensure git's dependencies are installed (Debian).
+  apt: "pkg={{ item }} state=installed"
+  with_items:
+    - libcurl4-gnutls-dev
+    - libexpat1-dev
+    - gettext
+    - libssl-dev
+    - build-essential
+    - gcc
+    - python-pygments
+    - htop
+    - tig
+    - tree
+  when: ansible_os_family == 'Debian'
+
+- name: Cloning  oh-my-zsh for normal user
+  git:
+    repo=https://github.com/robbyrussell/oh-my-zsh
+    dest=~/.oh-my-zsh
+  when: installation|success
+  become: false
+  register: cloning
+
+- name: Cloning  oh-my-zsh for root user
+  git:
+    repo=https://github.com/robbyrussell/oh-my-zsh
+    dest=~/.oh-my-zsh
+  when: installation|success
+  become: true
+  become_user: root
+
+
+- name: Change the default shell to zsh
+  shell: "{{ item }}"
+  with_items:
+    - chsh --shell=/bin/zsh pi
+    - chsh --shell=/bin/zsh root
+  when: installation|success
+
+- name: Deploy Slim-Raspbian script
+  copy: src=slimrasp.sh dest=/tmp/slimrasp.sh owner=root mode=755
+  become: true
+  become_user: root
+
+- name: Execute the script (at least takes 20 mins)
+  shell: sh /tmp/slimrasp.sh
+
+- name: Remove Slim-Raspbian script
+  file: path=tmp/slimrasp.sh state=absent

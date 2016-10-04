@@ -1,0 +1,8 @@
+---
+network_interfaces:  #define interfaces and settings. (Define separately for each node in host_vars) - Anything not defined can be added to addl_settings.
+  - name: eth0
+    configure: true
+    method: manual
+    address: 192.168.0.31/24
+    netmask: 255.255.255.0
+    gateway: 192.168.0.2

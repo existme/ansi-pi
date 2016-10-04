@@ -1,0 +1,67 @@
+---
+- name: install samba
+  apt: name=samba state=present
+  become: true
+  become_user: root
+  register: installation
+
+- name: samba_users | adding samba users to samba groups
+  user:
+    name: "{{ item.0.name }}"
+    groups: "{{ item.1 }}"
+    append: yes
+  with_subelements:
+    - '{{ samba_users }}'
+    - groups
+
+- name: unmount all normal mounts
+  shell: umount {{ item.src }}{{ item.path }} -lf warn=no
+  ignore_errors: yes
+  with_items: "{{ normal_mounts }}"
+
+- name: samba_users | creating samba user passwords
+  shell: "(echo {{ item.smbpasswd }}; echo {{ item.smbpasswd }}) | smbpasswd -s -a {{ item.name }}"
+  with_items: "{{ samba_users }}"
+
+- name: create_mountpoint | creating the mounting point
+  file:
+    path: "{{ samba_share_path }}"
+    owner: nobody
+    group: nogroup
+    mode: 0777
+    state: directory
+
+- name: create_shares | creating shared directories
+  file:
+    path: "{{ samba_share_path }}/{{ item.name }}"
+    owner: "{{ item.owner|default(omit) }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.folder_perms }}"
+    state: directory
+  with_items: "{{ samba_shares }}"
+  when: (not item.link is defined or item.link!='yes')
+
+- name: mount all normal mounts
+  mount:
+    state="mounted"
+    name="{{ samba_share_path }}{{ item.name }}"
+    src="{{ item.prefix }}{{ item.src }}{{ item.path }}"
+    opts="_netdev,user,idmap=user,umask=0000,uid={{ item.uid }},gid={{ item.gid }},allow_other,nobootwait"
+    fstype="{{ item.fstype }}"
+  with_items: "{{ normal_mounts }}"
+  notify:
+    - restart smbd
+    - restart nmbd
+
+- include: tasks/mount-wd.yml
+
+- name: Copy samba template
+  template:
+    src: templates/smb.tpl
+    dest: /etc/samba/smb.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart smbd
+    - restart nmbd

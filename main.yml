@@ -1,0 +1,16 @@
+---
+- name: Collecting Facts
+  hosts: pi
+  gather_facts: yes
+
+- name: Setup pi Environment
+  hosts: pi
+  become: true
+  become_user: root
+  roles:
+#    - packages
+#    - lansetup
+#    - samba
+#    - dotfiles
+#    - apache
+     - transmission

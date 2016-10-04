@@ -1,0 +1,14 @@
+---
+- name: restart nmbd
+  service:
+    name: "nmbd"
+    state: restarted
+  become: true
+  become_user: root
+
+- name: restart smbd
+  service:
+    name: "smbd"
+    state: restarted
+  become: true
+  become_user: root
